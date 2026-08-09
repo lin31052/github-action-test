@@ -1,0 +1,16 @@
+# PyTorch CPU 版 云端训练演示（GitHub Actions / Ubuntu glibc）
+# torch 不写进 dependencies：因为默认指向 PyPI 会带 CUDA，
+# 我们改为在 workflow 里用 --index-url CPU源 单独装。
+# 其余科学库正常声明。
+[project]
+name = "pytorch-demo"
+version = "0.1.0"
+description = "PyTorch CPU 云端训练 + 可视化演示（GitHub Actions）"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=1.26",
+    "matplotlib>=3.8",
+]
+
+[tool.uv]
+package = false

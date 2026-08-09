@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# output 下的结果文件要提交回仓库，单独放行
+output/*
+!output/RESULT.md
+!output/time_result.json
+!output/*.png
+
+.DS_Store

@@ -1,0 +1,60 @@
+name: PyTorch CPU Train
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  train:
+    name: PyTorch CPU 训练 + 结果回写
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: 创建环境并安装基础依赖
+        run: UV_PYTHON=3.12 uv sync
+
+      # PyTorch CPU 版：用官方 CPU 源单独装（pyproject 不声明 torch）
+      - name: 安装 PyTorch (CPU 版)
+        run: |
+          uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+          uv run python -c "import torch; print('torch', torch.__version__, '| cuda', torch.cuda.is_available())"
+
+      - name: 运行 PyTorch 训练
+        run: uv run python pytorch_train.py
+
+      - name: 展示 output(容错)
+        run: |
+          echo "=== output ==="
+          ls -la output/ 2>/dev/null || echo "(无 output)"
+          cat output/RESULT.md 2>/dev/null || echo "(无 RESULT.md)"
+
+      - name: 把结果提交回仓库
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add output/
+          if git diff --cached --quiet; then
+            echo "无变化，跳过"
+          else
+            git commit -m "bot: update pytorch results [skip ci]"
+            git push origin main
+          fi
+
+      - name: 上传 artifact(备用)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytorch-results
+          path: output/
+          if-no-files-found: ignore
